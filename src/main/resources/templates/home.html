@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeLeaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graph</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link th:href="@{/CSS/graph.css}" rel="stylesheet">
+
+
+  <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+    <symbol id="check-circle-fill" viewBox="0 0 16 16">
+      <path
+        d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+    </symbol>
+    <symbol id="info-fill" viewBox="0 0 16 16">
+      <path
+        d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
+    </symbol>
+    <symbol id="exclamation-triangle-fill" viewBox="0 0 16 16">
+      <path
+        d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+    </symbol>
+  </svg>
+</head>
+
+<body>
+  <!-- As a heading -->
+  <nav class="navbar" id="nav">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1" style="color: aliceblue;">Graph</span>
+    </div>
+  </nav>
+
+  </div>
+  <div th:if="${alertType == 'success'}" id="alert1"
+    class="alert alert-success d-flex align-items-center position-absolute top-0 start-50 translate-middle-x"
+    role="alert">
+    <svg class="icon bi flex-shrink-0 me-2" role="img" aria-label="Success:">
+      <use xlink:href="#check-circle-fill" />
+    </svg>
+    <div th:text="${alertMessage}">Success! Graph is successfully formed.</div>
+  </div>
+
+  <div th:if="${alertType == 'danger'}" id="alert2"
+    class="alert alert-danger d-flex align-items-center position-absolute top-0 start-50 translate-middle-x"
+    role="alert">
+    <svg class="icon bi flex-shrink-0 me-2" role="img" aria-label="Danger:">
+      <use xlink:href="#exclamation-triangle-fill" />
+    </svg>
+    <div th:text="${alertMessage}">Error! Some error in arguments, please check the input and then proceed.</div>
+  </div>
+
+
+  <div class="container d-flex justify-content-center align-items-center align-content-center">
+    <div class="row w-100">
+      <form th:action="@{/graph/createGraph}" id="graph"
+        class="card p-5 mt-5 mb-4 needs-validation col-xxl-9 col-lg-8 mx-auto" method="POST" th:object="${Graph}"
+        novalidate>
+        <h3 class="text-center mt-3 mb-4">Graph credentials</h3>
+
+        <div class="form-group mb-3">
+          <label for="vertex" class="form-label">Vertex<span class="required">*</span></label>
+          <input name="vertex" min="5" id="vertex" th:value="5" type="number" class="form-control formInput"
+            placeholder="Type integer" required />
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="edge" class="form-label">Edge<span class="required">*</span></label>
+          <input name="edge" id="edge" th:value="*{edge}" type="text" class="form-control formInput"
+            placeholder="e.g.(src, dest)  1-2,2-3,3-2 or 1-2, 2-3, 3-2" required />
+          <button id="random" type="button" class="mt-3" onclick="generateRandomValue()">Random</button>
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="weights" class="form-label">Weights</label>
+          <input name="weights" id="weights" th:value="*{weights}" type="text" class="form-control formInput"
+            placeholder="e.g.(weights)  1,3,2 or 1, 3, 2" />
+          <p>Weight will be implemented on the edge on the simaltenous manner of edge. Default weight of each edge is 1.
+          </p>
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="src" class="form-label">Source Node<span class="required">*</span></label>
+          <input name="src" id="src" th:value="*{src}" type="number" class="form-control formInput"
+            placeholder="Node to start BFS/DFS Traversal - e.g., 0" required />
+        </div>
+
+        <button type="submit" onsubmit="flash()" class="btn btn-danger formInput mt-3"
+          style="border-radius: 2rem; ">Build Graph</button>
+      </form>
+
+
+      <form id="short" class="card p-5 mt-5 mb-4 needs-validation col-xxl-9 col-lg-8 mx-auto" method="POST" novalidate>
+        <h3 class="text-center">Shortest path</h3>
+        <div class="form-group mb-3">
+          <label for="src" class="form-label">Source Node<span class="required">*</span></label>
+          <input name="src" id="src" type="number" class="form-control formInput" placeholder="Source Node - e.g., 0"
+            required />
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="dest" class="form-label">Destination Node<span class="required">*</span></label>
+          <input name="dest" id="dest" type="number" class="form-control formInput"
+            placeholder="Destination Node - e.g., 0" required />
+        </div>
+
+        <button class="btn btn-primary formInput mt-4">Shortest path</button>
+      </form>
+
+      <hr />
+      <h3>Traversal Order</h3>
+      <hr />
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">BFS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th id="bfs-order-list" scope="row"></th>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">DFS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th id="dfs-order-list" scope="row"></th>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Shortest path</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th id="shortestPath-order-list" scope="row"></th>
+          </tr>
+        </tbody>
+      </table>
+
+      <form id="bfs" class=" mt-5 needs-validation col-xxl-5 col-lg-8 mx-auto" method="POST" novalidate>
+        <button class="btn btn-primary bdfs">BFS Traversal</button>
+      </form>
+
+      <form id="dfs" class=" mt-5 needs-validation col-xxl-3 col-lg-8 mx-auto" method="POST" novalidate>
+        <button class="btn btn-primary bdfs">DFS Traversal</button>
+      </form>
+
+
+      <div  id="graph-container" class="visualization mt-5 mb-5"></div>
+      <!-- <script th:inline="javascript" th:src="@{/JS/animation.js}"></script> -->
+      <script th:inline="javascript">
+        const graphData =/*[[${graph}]]*/ {};
+        let bfsOrder = null;
+        let dfsOrder = null;
+        console.log("Graph Data:", graphData.nodes, graphData.links);
+
+        const width = 1000, height = 1000;
+
+        const svg = d3.select("#graph-container")
+          .append("svg")
+          .attr("width", width)
+          .attr("height", height);
+
+        // Create a simulation
+        const simulation = d3.forceSimulation(graphData.nodes)
+          .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100))
+          .force("charge", d3.forceManyBody().strength(-300))
+          .force("center", d3.forceCenter(width / 2, height / 2));
+
+        // Draw links (edges)
+        const link = svg.selectAll(".link")
+          .data(graphData.links)
+          .enter()
+          .append("line")
+          .attr("class", "link")
+          .style("stroke", "gray")
+          .style("stroke-width", 1);
+
+        // Add edge weight labels
+        const linkLabels = svg.selectAll(".link-label")
+          .data(graphData.links)
+          .enter()
+          .append("text")
+          .attr("class", "link-label")
+          .text(d => d.weight)
+          .attr("font-size", "12px")
+          .attr("font-weight", "bold")
+          .attr("fill", "black");
+
+        // Draw nodes
+        const node = svg.selectAll(".node")
+          .data(graphData.nodes)
+          .enter()
+          .append("circle")
+          .attr("class", "node")
+          .attr("r", 10)
+          .style("fill", "#ADD8E6")
+          .call(d3.drag()
+            .on("start", (event, d) => {
+              if (!event.active) simulation.alphaTarget(0.3).restart();
+              d.fx = d.x;
+              d.fy = d.y;
+            })
+            .on("drag", (event, d) => {
+              d.fx = event.x;
+              d.fy = event.y;
+            })
+            .on("end", (event, d) => {
+              if (!event.active) simulation.alphaTarget(0);
+              d.fx = null;
+              d.fy = null;
+            }));
+
+        // Add labels for nodes
+        const label = svg.selectAll(".label")
+          .data(graphData.nodes)
+          .enter()
+          .append("text")
+          .text(d => d.id)
+          .attr("font-size", "15px")
+          .attr("font-weight", "bold")
+          .attr("dx", 15)
+          .attr("dy", 4)
+
+
+        // Update simulation
+        simulation.on("tick", () => {
+          link.attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+
+          linkLabels.attr("x", d => (d.source.x + d.target.x) / 2)
+            .attr("y", d => (d.source.y + d.target.y) / 2);
+
+          node.attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+
+          label.attr("x", d => d.x)
+            .attr("y", d => d.y);
+        });
+
+        // Animation code remains unchanged
+        function animateTraversal(order, delay) {
+          const visitedNodes = new Set();
+
+          order.forEach((nodeId, i) => {
+            setTimeout(() => {
+              // Highlight the current node
+              svg.selectAll(".node")
+                .filter(d => d.id === nodeId)
+                .transition()
+                .duration(500)
+                .style("fill", "orange");
+
+              visitedNodes.add(nodeId);
+
+              // Highlight links connected to this node
+              svg.selectAll(".link")
+                .filter(d => visitedNodes.has(d.source.id) && visitedNodes.has(d.target.id))
+                .transition()
+                .duration(500)
+                .style("stroke", "red")
+                .style("stroke-width", 3);
+            }, i * delay);
+          });
+
+          // Reset styles after traversal animation completes
+          setTimeout(() => {
+            // Reset node styles
+            svg.selectAll(".node")
+              .transition()
+              .duration(500)
+              .style("fill", "#ADD8E6"); // Original color of the nodes
+
+            // Reset link styles
+            svg.selectAll(".link")
+              .transition()
+              .duration(500)
+              .style("stroke", "gray") // Original stroke color
+              .style("stroke-width", 1); // Original stroke width
+          }, order.length * delay);
+        }
+
+      </script>
+
+
+      <hr />
+      <table class="table">
+        <thead>
+          <tr >
+            <th>Sr. no</th>
+            <th>Source Node</th>
+            <th>Destination Node</th>
+            <th>Weight / Distance</th>
+          </tr>
+        </thead>
+          <tbody>
+            <tr th:each="edge, iterStat : ${links}">
+                <td th:text="${iterStat.index + 1}"></td> 
+                <td th:text="${edge.source}"></td>          
+                <td th:text="${edge.target}"></td>          
+                <td th:text="${edge.weight}"></td>           
+            </tr>
+        </tbody>
+      </table>
+
+
+
+    </div>
+  </div>
+
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+  <script th:src="@{/JS/generateRandomValue.js}"></script>
+  <script th:src="@{/JS/dfs.js}"></script>
+  <script th:src="@{/JS/bfs.js}"></script>
+  <script th:src="@{/JS/shortestPath.js}"></script>
+</body>
+
+</html>
